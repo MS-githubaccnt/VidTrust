@@ -4,7 +4,8 @@ from dotenv import load_dotenv
 from urllib.parse import urlencode
 import jwt
 import requests
-
+import uuid
+from firestore_connection.firestore import connect_firebase
 
 load_dotenv()
 
@@ -69,13 +70,17 @@ def auth_token():
             'picture': user_info.get('picture')
         }
 
+
+
         token = jwt.encode({'user': user}, config['token_secret'], algorithm='HS256')
         
         response = make_response(jsonify({'user': user}))
         
         response.set_cookie('token', token, httponly=True, secure=True, 
                             samesite='None', max_age=config['token_expiration'])
-        
+        id = str(uuid.uuid4())
+        user_ref = connect_firebase()
+        user_ref.document(id).set(user)
         return response
     
     except Exception as e:
