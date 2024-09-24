@@ -18,13 +18,14 @@ const Callback: React.FC = () => {
           const res = await axios.get(`${serverUrl}/auth/token${window.location.search}`);
           console.log('response: ', res);
           checkLoginState();
-          navigate('/');
+          console.log("abhi chalo home page par !!!")
+          navigate('/home');
         } catch (err) {
           console.error(err);
           navigate('/');
         }
       } else if (loggedIn === true) {
-        navigate('/');
+        navigate('/home');
       }
     };
 

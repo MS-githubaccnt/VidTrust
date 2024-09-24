@@ -78,9 +78,15 @@ def auth_token():
         
         response.set_cookie('token', token, httponly=True, secure=True, 
                             samesite='None', max_age=config['token_expiration'])
-        id = str(uuid.uuid4())
+        
+   
         user_ref = connect_firebase()
-        user_ref.document(id).set(user)
+        
+        existing_user = user_ref.where('email', '==', user['email']).limit(1).get()
+        if len(existing_user) == 0:
+            id = str(uuid.uuid4())
+            user_ref.document(id).set(user)
+        
         return response
     
     except Exception as e:

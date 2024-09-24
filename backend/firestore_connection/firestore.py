@@ -7,3 +7,8 @@ def connect_firebase():
   db = firestore.client()
   users_ref = db.collection('users')
   return users_ref
+
+def video_url_to_firestore():
+  db = firestore.client()
+  video_ref = db.collection('videos')
+  return video_ref

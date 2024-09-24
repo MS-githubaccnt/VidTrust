@@ -1,13 +1,14 @@
 import React from 'react';
-import { RouterProvider, createBrowserRouter } from 'react-router-dom';
-import { AuthContextProvider } from './context/AuthContext';
-import Home from './pages/Home';
+import { BrowserRouter, Navigate, Route, RouterProvider, Routes, createBrowserRouter } from 'react-router-dom';
+import { AuthContextProvider, useAuth } from './context/AuthContext';
 import Callback from './pages/Callback';
+import LoginPage from './pages/LoginPage';
+import Home from './pages/Home';
 
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <Home />,
+    element: <LoginPage />,
   },
   {
     path: '/auth/callback',
@@ -16,12 +17,18 @@ const router = createBrowserRouter([
 ]);
 
 const App: React.FC = () => {
+  const { loggedIn } = useAuth();
   return (
     <div className="App">
       <header className="App-header">
-        <AuthContextProvider>
-          <RouterProvider router={router} />
-        </AuthContextProvider>
+        <BrowserRouter>
+            <Routes>
+            <Route element={<LoginPage />} path='/' />
+            <Route element={loggedIn ? <Home /> : <Navigate to="/"/>} path="/home" /> 
+            <Route element={<Callback />} path='/auth/callback' />
+            </Routes>
+        </BrowserRouter>
+
       </header>
     </div>
   );

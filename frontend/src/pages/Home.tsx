@@ -1,13 +1,18 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import Dashboard from '../components/Dashboard';
-import Login from '../components/Login';
+import UploadVideoToS3WithNativeSdk from '@/components/VideoUpload';
 
 const Home: React.FC = () => {
   const { loggedIn } = useAuth();
 
-  if (loggedIn === true) return <Dashboard />;
-  if (loggedIn === false) return <Login />;
+  if (loggedIn === true) return (
+    <>
+      <Dashboard />;
+      <UploadVideoToS3WithNativeSdk />
+    </>
+  )
+
   return null;
 };
 
