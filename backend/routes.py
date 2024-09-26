@@ -1,7 +1,29 @@
-from backend.controllers.user_controllers import login_task,register_task
+from controllers.auth_controllers import get_auth_url, auth_token, check_logged_in as check_logged_in_controller, logged_out
+from controllers.video_controllers import video_url as video_url_controller
+from controllers.video_controllers import video_fetch_url as video_fetch_url_controller
+from middleware.auth_middleware import auth_middleware
 from backend.controllers.signature_controllers import sign_combined_data,verify_signature
 def configure_routes(app):
-    app.route('/login', methods=['POST'])(login_task)
-    app.route('/register', methods=['POST'])(register_task)
+    @app.route('/auth/logged_in', methods=['GET'])
+    def check_logged_in_route():
+        return check_logged_in_controller()
+
+    @app.route('/auth/video_url', methods=['POST'])
+    @auth_middleware
+    def video_url_route():
+        return video_url_controller()
+
+    @app.route('/auth/logout', methods=['POST'])
+    @auth_middleware
+    def logout_route():
+        return logged_out()
+    
+    @app.route('/auth/video_fetch_url',methods=['GET'])
+    @auth_middleware
+    def video_fetch_url_route():
+        return video_fetch_url_controller()
+    
+    app.route('/auth/url', methods=['GET'])(get_auth_url)
+    app.route('/auth/token', methods=['GET'])(auth_token)
     app.route('/sign',methods=['POST'])(sign_combined_data)
     app.route('/verify',methods=['POST'])(verify_signature)
