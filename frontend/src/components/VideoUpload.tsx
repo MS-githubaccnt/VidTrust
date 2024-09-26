@@ -1,4 +1,4 @@
-import React ,{useState} from 'react';
+import {useState} from 'react';
 import AWS from 'aws-sdk'
 import axios from 'axios';
 
@@ -19,15 +19,43 @@ const myBucket = new AWS.S3({
 })
 
 const UploadVideoToS3WithNativeSdk = () => {
+    const [title,setTitle] = useState<string>("");
+    const [progress1 , setProgress1] = useState(0);
+    const [progress2 , setProgress2] = useState(0);
+    const [selectedFile2, setSelectedFile2] = useState<any>();
+    const [selectedFile1, setSelectedFile1] = useState<any>();
+    const [videoUrl,setVideoUrl] = useState<string>("");
+    const [imageUrl,setImageUrl] = useState<string>("");
 
-    const [progress , setProgress] = useState(0);
-    const [selectedFile, setSelectedFile] = useState<any>();
-
-    const handleFileInput = (e:any) => {
-        setSelectedFile(e.target.files[0]);
+    const handleFileInput1 = (e:any) => {
+        setSelectedFile1(e.target.files[0]);
     }
 
-    const uploadFile = async (file:File) => {
+    const handleFileInput2 = (e:any) => {
+        setSelectedFile2(e.target.files[0]);
+    }
+
+
+    const handleTitleChange = (e:any) =>{
+        setTitle(e.target.value);
+    }
+
+    const handleFinalSubmit = async (e:any) =>{
+      e.preventDefault();
+      var storeStruct = {
+        title:title,
+        imageUrl:imageUrl,
+        videoUrl:videoUrl
+      }
+      const response = await axios.post(`${serverUrl}/auth/video_url`,storeStruct)
+      if(response.status === 200){
+        console.log("")
+      }
+
+    }
+
+
+    const uploadFile1 = async (file:File) => {
 
         const params = {
             ACL: 'public-read',
@@ -38,28 +66,59 @@ const UploadVideoToS3WithNativeSdk = () => {
 
         myBucket.putObject(params)
             .on('httpUploadProgress', (evt) => {
-                setProgress(Math.round((evt.loaded / evt.total) * 100))
+                setProgress1(Math.round((evt.loaded / evt.total) * 100))
             })
             .send((err) => {
               if (err) {
                 console.error(err);
               } else {
                 console.log('Upload successful!');
-                const uploadedObjectUrl = `https://s3.${REGION}.amazonaws.com/${S3_BUCKET}/${file.name}`;
-                console.log(`Uploaded object URL: ${uploadedObjectUrl}`);
+                const uploadedVideoUrl = `https://s3.${REGION}.amazonaws.com/${S3_BUCKET}/${file.name}`;
+                console.log(`Uploaded object URL: ${uploadedVideoUrl}`);
+                setVideoUrl(uploadedVideoUrl)
               }
             })
-        const response = await axios.post(`${serverUrl}/auth/video_url`,{
-          url : `https://s3.${REGION}.amazonaws.com/${S3_BUCKET}/${file.name}`
-        })
-        console.log(response);
+    }
+
+    const uploadFile2 = async (file:File) => {
+
+        const params = {
+            ACL: 'public-read',
+            Body: file,
+            Bucket: S3_BUCKET,
+            Key: file.name
+        };
+
+        myBucket.putObject(params)
+            .on('httpUploadProgress', (evt) => {
+                setProgress2(Math.round((evt.loaded / evt.total) * 100))
+            })
+            .send((err) => {
+              if (err) {
+                console.error(err);
+              } else {
+                console.log('Upload successful!');
+                const uploadedImageUrl = `https://s3.${REGION}.amazonaws.com/${S3_BUCKET}/${file.name}`;
+                console.log(`Uploaded object URL: ${uploadedImageUrl}`);
+                setImageUrl(uploadedImageUrl);
+              }
+            })
     }
 
 
     return <div>
-        <div>Upload your video here : {progress}%</div>
-        <input type="file" onChange={handleFileInput}/>
-        <button onClick={() => uploadFile(selectedFile)}> Upload to S3</button>
+        <div>Video Title :%</div>
+        <input type="text" value={title}  onChange={handleTitleChange}/>
+        <br></br>
+        <div>Upload your video here : {progress1}%</div>
+        <input type="file" onChange={handleFileInput2}/>
+        <button onClick={() => uploadFile1(selectedFile1)}> Upload to S3</button>
+        <br></br>
+        <div>Upload your thumbnail here : {progress2}%</div>
+        <input type="file" onChange={handleFileInput1}/>
+        <button onClick={() => uploadFile2(selectedFile2)}> Upload to S3</button>
+        <br></br>
+        <button type='submit' onClick={(e)=>handleFinalSubmit(e)}>UPLOAD</button>
     </div>
 }
 
