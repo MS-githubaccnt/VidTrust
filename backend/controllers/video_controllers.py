@@ -7,7 +7,9 @@ import requests
 import uuid
 from firestore_connection.firestore     import video_url_to_firestore
 from botocore.exceptions import NoCredentialsError
+import logging
 
+logger = logging.getLogger(__name__)
 
 config = {
     'client_id': os.getenv('GOOGLE_CLIENT_ID'),
@@ -34,10 +36,10 @@ def video_url():
     user_dictionary = decoded_token.get('user')
     email = user_dictionary.get('email')
     video_struct = {
-        email :email,
-        title:title,
-        imageUrl:imageUrl,
-        videoUrl:videoUrl
+        "email" :email,
+        "title":title,
+        "imageUrl":imageUrl,
+        "videoUrl":videoUrl
     }
     id = str(uuid.uuid4())
     video_ref = video_url_to_firestore()
@@ -46,21 +48,57 @@ def video_url():
 
 
 def video_fetch_url():
-    token = request.cookies.get('token')
-    decoded_token = jwt.decode(token, config['token_secret'],algorithms=["HS256"])
-    user_dictionary = decoded_token.get('user')
-    email = user_dictionary.get('email')
-    video_ref = video_url_to_firestore()
-    query = video_ref.where('email', '==', email)
-    docs = query.stream()
-    results = []
-    for doc in docs:
-        data = doc.to_dict()
-        results.append({
-            'id': doc.id,
-            'email': data.get('email'),
-            'title':data.get('title'),
-            'imageUrl': data.get('imageUrl'),
-            'videoUrl':data.get('videoUrl')
-        })
-    return jsonify(results)
+    logger.info("Entering video_fetch_url function")
+    try:
+        token = request.cookies.get('token')
+        if not token:
+            logger.error("No token found in cookies")
+            return jsonify({"error": "No authentication token found"}), 401
+
+        logger.info(f"Token received: {token[:10]}...")  
+
+        try:
+            decoded_token = jwt.decode(token, config['token_secret'], algorithms=["HS256"])
+        except jwt.InvalidTokenError:
+            logger.error("Invalid token")
+            return jsonify({"error": "Invalid authentication token"}), 401
+
+        user_dictionary = decoded_token.get('user')
+        if not user_dictionary:
+            logger.error("No user dictionary in decoded token")
+            return jsonify({"error": "Invalid token structure"}), 401
+
+        email = user_dictionary.get('email')
+        if not email:
+            logger.error("No email found in user dictionary")
+            return jsonify({"error": "Email not found in token"}), 401
+
+        logger.info(f"Fetching videos for email: {email}")
+
+        video_ref = video_url_to_firestore()
+        query = video_ref.where('email', '==', email)
+        logger.info(f"Query created: {query._filters_pb}")  # Log the query filters
+
+        docs = query.stream()
+        results = []
+        for doc in docs:
+            data = doc.to_dict()
+            results.append({
+                'id': doc.id,
+                'email': data.get('email'),
+                'title': data.get('title'),
+                'imageUrl': data.get('imageUrl'),
+                'videoUrl': data.get('videoUrl')
+            })
+            logger.info(f"Document found: {doc.id}")
+
+        logger.info(f"Total documents found: {len(results)}")
+
+        if not results:
+            logger.warning(f"No documents found for email: {email}")
+
+        return jsonify(results)
+
+    except Exception as e:
+        logger.exception(f"An error occurred: {str(e)}")
+        return jsonify({"error": "An internal error occurred"}), 500

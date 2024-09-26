@@ -5,10 +5,13 @@ import os
 from dotenv import load_dotenv
 from routes import configure_routes
 from urllib.parse import urlencode
-
-load_dotenv()  # This loads the variables from .env file
+import logging
+load_dotenv()  
 
 app = Flask(__name__)
+
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 CORS(app, supports_credentials=True, origins="http://localhost:3000")
 

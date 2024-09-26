@@ -17,16 +17,18 @@ const VideosFetch: React.FC = () => {
 
   const get_video_urls = async () => {
     try {
+      console.log("laa rha hu videos baith abhi shaanti se")
       const response = await axios.get<VideoUrl[]>(`${serverUrl}/auth/video_fetch_url`);
+      console.log("ye lo aa gyi, ab khush?")
+      console.log(response.data)
+      console.log(response)
       setUrls(response.data);
     } catch (err) {
       console.error("Error fetching video URLs:", err);
     }
   };
 
-  useEffect(() => {
-    get_video_urls();
-  }, []); 
+
 
   const playVideo = (video: VideoUrl) => {
     setSelectedVideo(video);
@@ -38,7 +40,8 @@ const VideosFetch: React.FC = () => {
     setIsVideoPlaying(false);
   };
 
-  return (
+  return (<>
+    <button onClick={get_video_urls}>Show My Videos</button>
     <div className="container mx-auto p-4">
       {isVideoPlaying && selectedVideo && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
@@ -79,6 +82,7 @@ const VideosFetch: React.FC = () => {
         ))}
       </div>
     </div>
+    </>
   );
 };
 
