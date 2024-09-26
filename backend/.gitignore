@@ -1,0 +1,6 @@
+venv
+.env
+private_key.pem
+public_key.pem
+signature.bin
+video.mp4

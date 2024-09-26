@@ -1,4 +1,4 @@
-from controllers import login_task,register_task
+from backend.controllers.user_controllers import login_task,register_task
 
 def configure_routes(app):
     app.route('/login', methods=['POST'])(login_task)
