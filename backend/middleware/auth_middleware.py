@@ -34,3 +34,11 @@ def auth_middleware(f):
             return jsonify({'message': 'Invalid token'}), 401
         return f(*args, **kwargs)
     return decorated
+
+
+
+
+
+
+
+

@@ -19,3 +19,5 @@ def video_url_to_firestore():
   video_ref = db.collection('videos')
   logger.info("dsvjhsvkhdsvf gjfv sagvjdfgvfghv dfjv dgjv gh vgfv ghd vghd ghd ghd hgdz ghzfdhd zdgh zdhg h h hzd hd d   zdh zgh d zhfd ")
   return video_ref
+
+

@@ -2,8 +2,11 @@ import { useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import axios from 'axios';
 import { serverUrl } from '../utils/api';
+import dotenv from "dotenv";
 
-const supabase = createClient('https://ujxhafubgfllbkrxxezb.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqeGhhZnViZ2ZsbGJrcnh4ZXpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjczMzA2ODgsImV4cCI6MjA0MjkwNjY4OH0.HedtgWuXLq7UHI2xR196dGed3JoV-FHjHg5nhJN7lLA');
+dotenv.config()
+
+const supabase = createClient(process.env.SUPABASE_URL||"", process.env.SUPABASE_ANON_KEY||"");
 
 const UploadVideoToS3WithNativeSdk = () => {
     const [title, setTitle] = useState<string>("");
@@ -129,3 +132,14 @@ const UploadVideoToS3WithNativeSdk = () => {
 }
 
 export default UploadVideoToS3WithNativeSdk;
+
+
+
+
+
+
+
+
+
+
+
