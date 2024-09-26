@@ -24,12 +24,13 @@ config = {
 
 
 def video_url():
+    print("ckdnjdkscdcsnjdksjcdkjcndkscndnkcjdsckdjcdkcsdjcn")
     data = request.json
     title = data.get('title')
-    imageUrl = data.get('url')
+    imageUrl = data.get('imageUrl')
     videoUrl = data.get('videoUrl')
     token = request.cookies.get('token')
-    decoded_token = jwt.decode(token, config['token_secret'])
+    decoded_token = jwt.decode(token, config['token_secret'],algorithms=['HS256'])
     user_dictionary = decoded_token.get('user')
     email = user_dictionary.get('email')
     video_struct = {
@@ -46,7 +47,7 @@ def video_url():
 
 def video_fetch_url():
     token = request.cookies.get('token')
-    decoded_token = jwt.decode(token, config['token_secret'])
+    decoded_token = jwt.decode(token, config['token_secret'],algorithms=["HS256"])
     user_dictionary = decoded_token.get('user')
     email = user_dictionary.get('email')
     video_ref = video_url_to_firestore()

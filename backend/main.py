@@ -10,7 +10,7 @@ load_dotenv()  # This loads the variables from .env file
 
 app = Flask(__name__)
 
-CORS(app, origins=[os.getenv('CLIENT_URL')], supports_credentials=True)
+CORS(app, supports_credentials=True, origins="http://localhost:3000")
 
 config = {
     'client_id': os.getenv('GOOGLE_CLIENT_ID'),

@@ -63,7 +63,7 @@ def auth_token():
             return jsonify({'message': 'Auth error'}), 400
         
 
-        user_info = jwt.decode(id_token, options={"verify_signature": False})
+        user_info = jwt.decode(id_token, options={"verify_signature": False},algorithms=['HS256'])
         user = {
             'name': user_info.get('name'),
             'email': user_info.get('email'),
