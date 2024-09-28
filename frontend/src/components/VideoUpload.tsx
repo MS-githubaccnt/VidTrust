@@ -1,12 +1,11 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import axios from 'axios';
 import { serverUrl } from '../utils/api';
-import dotenv from "dotenv";
+import { Button, TextField, Typography, Box, LinearProgress } from '@mui/material';
 
-dotenv.config()
+const supabase = createClient("", "");
 
-const supabase = createClient(process.env.SUPABASE_URL||"", process.env.SUPABASE_ANON_KEY||"");
 
 const UploadVideoToS3WithNativeSdk = () => {
     const [title, setTitle] = useState<string>("");
@@ -115,31 +114,119 @@ const UploadVideoToS3WithNativeSdk = () => {
         }
     }
 
-    return <div>
-        <div>Video Title :%</div>
-        <input type="text" value={title} onChange={handleTitleChange} />
-        <br></br>
-        <div>Upload your video here : {progress1}%</div>
-        <input type="file" onChange={handleFileInput1} />
-        <button onClick={() => uploadFile1(selectedFile1, 'video', setProgress1, setVideoUrl)}> Upload to S3</button>
-        <br></br>
-        <div>Upload your thumbnail here : {progress2}%</div>
-        <input type="file" onChange={handleFileInput2} />
-        <button onClick={() => uploadFile2(selectedFile2, 'images', setProgress2, setImageUrl)}> Upload to S3</button>
-        <br></br>
-        <button type='submit' onClick={(e) => handleFinalSubmit(e)}>UPLOAD</button>
-    </div>
+    return <Box sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        padding: '40px',
+        backgroundColor: 'rgba(0, 0, 0, 0.2)',
+        borderRadius: '15px',
+        boxShadow: '0 0 10px 5px rgba(0, 237, 100, 0.3)',
+        backdropFilter: 'blur(5px)',
+        maxWidth: '600px',
+        margin: '0 auto',
+    }}>
+        <Typography variant="h4" sx={{ color: 'white', mb: 4, fontFamily: 'Space Grotesk, sans-serif' }}>
+            Upload Your Video
+        </Typography>
+
+        <TextField
+            fullWidth
+            label="Video Title"
+            variant="outlined"
+            value={title}
+            onChange={handleTitleChange}
+            sx={{
+                mb: 3,
+                '& .MuiOutlinedInput-root': {
+                    color: 'white',
+                    '& fieldset': { borderColor: '#00ED64' },
+                    '&:hover fieldset': { borderColor: '#00ED64' },
+                    '&.Mui-focused fieldset': { borderColor: '#00ED64' },
+                },
+                '& .MuiInputLabel-root': { color: '#00ED64' },
+            }}
+        />
+
+        <Box className="mb-6">
+            <Typography variant="body2" className="mb-2">
+                Upload your video here: {progress1}%
+            </Typography>
+            <input
+                type="file"
+                onChange={handleFileInput1}
+                className="mb-2"
+            />
+            <Button
+                variant="contained"
+                color="primary"
+                onClick={() => uploadFile1(selectedFile1, 'video', setProgress1, setVideoUrl)}
+                disabled={!selectedFile1}
+                sx={{
+                    mb: 2,
+                    backgroundColor: '#00ED64',
+                    color: 'black',
+                    '&:hover': { backgroundColor: 'rgba(0, 237, 100, 0.8)' },
+                    '&.Mui-disabled': { backgroundColor: 'rgba(0, 237, 100, 0.3)', color: 'rgba(0, 0, 0, 0.3)' },
+                }}
+            >
+                Upload Video
+            </Button>
+            {progress1 > 0 && (
+                <Box sx={{ width: '100%', mb: 2 }}>
+                    <LinearProgress variant="determinate" value={progress1} sx={{ backgroundColor: 'rgba(0, 237, 100, 0.3)', '& .MuiLinearProgress-bar': { backgroundColor: '#00ED64' } }} />
+                </Box>
+            )}
+        </Box>
+
+        <Box className="mb-6">
+            <Typography variant="body2" className="mb-2">
+                Upload your thumbnail here: {progress2}%
+            </Typography>
+            <input
+                type="file"
+                onChange={handleFileInput2}
+                className="mb-2"
+            />
+            <Button
+                variant="contained"
+                color="primary"
+                onClick={() => uploadFile1(selectedFile2, 'image', setProgress2, setImageUrl)}
+                disabled={!selectedFile2}
+                sx={{
+                    mb: 2,
+                    backgroundColor: '#00ED64',
+                    color: 'black',
+                    '&:hover': { backgroundColor: 'rgba(0, 237, 100, 0.8)' },
+                    '&.Mui-disabled': { backgroundColor: 'rgba(0, 237, 100, 0.3)', color: 'rgba(0, 0, 0, 0.3)' },
+                }}
+            >
+                Upload Thumbnail
+            </Button>
+            {progress2 > 0 && (
+                <Box sx={{ width: '100%', mb: 2 }}>
+                    <LinearProgress variant="determinate" value={progress2} sx={{ backgroundColor: 'rgba(0, 237, 100, 0.3)', '& .MuiLinearProgress-bar': { backgroundColor: '#00ED64' } }} />
+                </Box>
+            )}
+        </Box>
+
+        <Button
+            variant="contained"
+            color="success"
+            fullWidth
+            onClick={handleFinalSubmit}
+            disabled={!title || !videoUrl || !imageUrl}
+            sx={{
+                mb: 2,
+                backgroundColor: '#00ED64',
+                color: 'black',
+                '&:hover': { backgroundColor: 'rgba(0, 237, 100, 0.8)' },
+                '&.Mui-disabled': { backgroundColor: 'rgba(0, 237, 100, 0.3)', color: 'rgba(0, 0, 0, 0.3)' },
+            }}
+        >
+            Submit
+        </Button>
+    </Box>
 }
 
 export default UploadVideoToS3WithNativeSdk;
-
-
-
-
-
-
-
-
-
-
-

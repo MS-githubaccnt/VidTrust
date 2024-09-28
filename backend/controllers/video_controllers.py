@@ -5,7 +5,7 @@ from urllib.parse import urlencode
 import jwt
 import requests
 import uuid
-from firestore_connection.firestore     import video_url_to_firestore
+from firestore_connection.firestore     import video_url_to_firestore,temp_video_url_to_firestore
 from botocore.exceptions import NoCredentialsError
 import logging
 
@@ -103,7 +103,36 @@ def video_fetch_url():
         logger.exception(f"An error occurred: {str(e)}")
         return jsonify({"error": "An internal error occurred"}), 500
 
+def test_video():
+    data = request.json
+    name = data.get('name')
+    videoUrl = data.get('videoUrl')
+    video_struct = {
+        "name" :name,
+        "videoUrl":videoUrl
+    }
+    id = str(uuid.uuid4())
+    video_ref = video_url_to_firestore()
+    video_ref.document(id).set(video_struct)
+    return jsonify({"status": "success", "message": "Data received and uploaded"}), 200
 
 
+def delete_video():
+    data = request.json
+    name = data.get('name')
+    
+    if not name:
+        return jsonify({"status": "error", "message": "Name is required"}), 400
+    video_ref = temp_video_url_to_firestore()
+    query = video_ref.where('name', '==', name)
+    docs = query.stream()
 
+    deleted = False
+    for doc in docs:
+        doc.reference.delete()
+        deleted = True
 
+    if deleted:
+        return jsonify({"status": "success", "message": f"Video(s) with name '{name}' deleted successfully"}), 200
+    else:
+        return jsonify({"status": "not found", "message": f"No video found with name '{name}'"}), 404

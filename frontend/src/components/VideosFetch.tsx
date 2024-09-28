@@ -17,18 +17,16 @@ const VideosFetch: React.FC = () => {
 
   const get_video_urls = async () => {
     try {
-      console.log("laa rha hu videos baith abhi shaanti se")
       const response = await axios.get<VideoUrl[]>(`${serverUrl}/auth/video_fetch_url`);
-      console.log("ye lo aa gyi, ab khush?")
-      console.log(response.data)
-      console.log(response)
       setUrls(response.data);
     } catch (err) {
       console.error("Error fetching video URLs:", err);
     }
   };
 
-
+  useEffect(()=>{
+    get_video_urls()
+  },[])
 
   const playVideo = (video: VideoUrl) => {
     setSelectedVideo(video);
@@ -40,24 +38,25 @@ const VideosFetch: React.FC = () => {
     setIsVideoPlaying(false);
   };
 
-  return (<>
-    <button onClick={get_video_urls}>Show My Videos</button>
-    <div className="container mx-auto p-4">
+  return (
+    <div style={styles.container}>
       {isVideoPlaying && selectedVideo && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-          <div className="bg-white p-4 rounded-lg max-w-4xl w-full">
-            <video 
-              src={selectedVideo.videoUrl} 
-              controls 
-              autoPlay 
-              className="w-full"
-            >
-              Your browser does not support the video tag.
-            </video>
-            <h2 className="text-xl font-bold mt-2">{selectedVideo.title}</h2>
+        <div style={styles.overlay}>
+          <div style={styles.modalContent}>
+            <div style={styles.videoWrapper}>
+              <video 
+                src={selectedVideo.videoUrl} 
+                controls 
+                autoPlay 
+                style={styles.video}
+              >
+                Your browser does not support the video tag.
+              </video>
+            </div>
+            <h2 style={styles.modalTitle}>{selectedVideo.title}</h2>
             <button 
               onClick={closeVideo}
-              className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+              style={styles.closeButton}
             >
               Close
             </button>
@@ -65,15 +64,15 @@ const VideosFetch: React.FC = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div style={styles.grid}>
         {urls.map((video) => (
-          <div key={video.id} className="bg-white rounded-lg shadow-md overflow-hidden">
-            <img src={video.imageUrl} alt={video.title} className="w-full h-48 object-cover" />
-            <div className="p-4">
-              <h3 className="text-lg font-semibold truncate">{video.title}</h3>
+          <div key={video.id} style={styles.card}>
+            <div style={{...styles.thumbnail, backgroundImage: `url(${video.imageUrl})`}} />
+            <div style={styles.cardContent}>
+              <h3 style={styles.cardTitle}>{video.title}</h3>
               <button 
                 onClick={() => playVideo(video)}
-                className="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                style={styles.playButton}
               >
                 Play
               </button>
@@ -82,9 +81,114 @@ const VideosFetch: React.FC = () => {
         ))}
       </div>
     </div>
-    </>
   );
 };
 
-export default VideosFetch;
+const styles = {
+  container: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    padding: '40px',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    borderRadius: '15px',
+    boxShadow: '0 0 10px 5px rgba(0, 237, 100, 0.3)',
+    backdropFilter: 'blur(5px)',
+    maxWidth: '1200px',
+    margin: '0 auto',
+  },
+  grid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+    gap: '20px',
+    width: '100%',
+  },
+  card: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: '8px',
+    overflow: 'hidden',
+    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+  },
+  thumbnail: {
+    width: '100%',
+    height: '200px',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+  },
+  cardContent: {
+    padding: '15px',
+  },
+  cardTitle: {
+    fontSize: '18px',
+    fontWeight: 'bold',
+    marginBottom: '10px',
+    whiteSpace: 'nowrap' as const,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    color: 'white',
+    fontFamily: 'Space Grotesk, sans-serif',
+  },
+  playButton: {
+    backgroundColor: '#00ED64',
+    color: 'black',
+    padding: '8px 16px',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: 'bold',
+    transition: 'background-color 0.3s',
+  },
+  overlay: {
+    position: 'fixed' as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  modalContent: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    padding: '20px',
+    borderRadius: '8px',
+    maxWidth: '80%',
+    width: '800px',
+    boxShadow: '0 0 10px 5px rgba(0, 237, 100, 0.3)',
+  },
+  videoWrapper: {
+    position: 'relative' as const,
+    paddingTop: '56.25%', 
+  },
+  video: {
+    position: 'absolute' as const,
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+  },
+  modalTitle: {
+    fontSize: '24px',
+    fontWeight: 'bold',
+    marginTop: '15px',
+    marginBottom: '15px',
+    color: 'white',
+    fontFamily: 'Space Grotesk, sans-serif',
+  },
+  closeButton: {
+    backgroundColor: '#00ED64',
+    color: 'black',
+    padding: '10px 20px',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '16px',
+    fontWeight: 'bold',
+    transition: 'background-color 0.3s',
+  },
+};
 
+export default VideosFetch;
