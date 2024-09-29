@@ -21,7 +21,7 @@ git clone https://github.com/DeenankSharma/b27_project.git
 cd frontend
 ```
 
-### 3. Set up the Nextjs project
+### 3. Set up the React project
 
 ```bash
 npm install

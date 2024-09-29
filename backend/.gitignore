@@ -1,2 +1,7 @@
+venv
 .env
-backend/firestore_connection/b27project-31bde-firebase-adminsdk-ybhhu-2459f43c40.json
+private_key.pem
+public_key.pem
+signature.bin
+video.mp4
+
