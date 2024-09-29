@@ -70,16 +70,16 @@ def encode_frame_to_base64(frame):
     return frame_base64
 
 def extract_metadata(video_path):
-    probe=ffmpeg.probe(video_path)
+    probe=ffmpeg.probe(video_path,cmd="C:/ffmpeg/bin/ffprobe.exe")
     video_stream=next((stream for stream in probe['streams'] if stream['codec_type']=='video'),None)
     print(video_stream)
     return video_stream
 
-def extract_signature_and_public_key():
-    ffmpeg_command=['ffprobe','-v','quiet','-print_format','json','-show_format' ,"output_video.mkv"]
+def extract_signature_and_public_key(video_path):
+    ffmpeg_command=['C:/ffmpeg/bin/ffprobe','-v','quiet','-print_format','json','-show_format' ,video_path]
     result = subprocess.run(ffmpeg_command,capture_output=True,text=True)
     metadata=json.loads(result.stdout)
-    
+    print("this might be your metadata\n\n\n\n",metadata)
     tags = metadata['format']['tags']["['SIGNATURE"]
     values=tags.split("', 'public_key=")
 
@@ -98,7 +98,7 @@ def extract_signature_and_public_key():
     return public_key,signature
 
 
-def set_signature_and_public_key(local_video_path, signature, public_pem):
+def set_signature_and_public_key(local_video_path,output_video_path, signature, public_pem):
     signature_b64 = base64.b64encode(signature).decode('utf-8')
     public_pem_b64 = base64.b64encode(public_pem).decode('utf-8')
     print(signature_b64,"\n\n",public_pem_b64)
@@ -110,19 +110,21 @@ def set_signature_and_public_key(local_video_path, signature, public_pem):
         ]
     }
     print(metadata_args)
-    input_stream=ffmpeg.input("test_video.mkv")
-    output_stream=input_stream.output('output_video.mkv',vcodec='copy',acodec='copy', **metadata_args)
+    input_stream=ffmpeg.input(local_video_path)
+    output_stream=input_stream.output(output_video_path,vcodec='copy',acodec='copy', **metadata_args)
     output_stream.run(overwrite_output=True)
+
 
 def upload_video_to_supabase(local_file_path, remote_file_name):
     with open(local_file_path, "rb") as file:
-        client.storage.from_("video").upload(remote_file_name, file)
+        client.storage.from_("video").update(remote_file_name, file)
 
 def load_public_key(pem_data):
     return serialization.load_pem_public_key(
         pem_data, 
         backend=default_backend()
     )
+
 def combine_data(user_data,metadata,frames):
     encoded_frames=[encode_frame_to_base64(frame) for frame in frames]
     compressed_frames = zlib.compress(''.join(encoded_frames).encode('utf-8'))
@@ -137,9 +139,8 @@ def combine_data(user_data,metadata,frames):
     return combined_data_str
 
 
-def sign_combined_data(user_data,metadata,frames):
-    with open("private_key.pem","rb") as f:
-        private_key=serialization.load_pem_private_key(f.read(),password=None)
+def sign_combined_data(private_pem,user_data,metadata,frames):
+    private_key=serialization.load_pem_private_key(private_pem,password=None)
     combined_data=combine_data(user_data,metadata,frames)
     signature=private_key.sign(
         combined_data.encode('utf-8'),
@@ -175,30 +176,38 @@ def download_video(url, local_path):
     with open(local_path, 'wb') as file:
         file.write(response.content)
 
-video_url = os.environ["SUPABASE_TEST_VIDEO"]
-local_video_path = 'local_video.mp4'
-download_video(video_url, local_video_path)
-
-signature_ref=connect_signature_database()
-
-user_data={
-    "name":"Robert Downey Jr.",
-    "email":"robertdowney@gmail.com",
-}
-private_pem,public_pem=generate_key()
-metadata=extract_metadata(video_url)
-frames=frame_capture(video_url)
-signature,combined_data=sign_combined_data(user_data,metadata,frames)
-
-data={
+def upload_signed_video(user_data,video_url):
+    local_video_path = 'local_video.mkv'
+    output_video_path='output_video.mkv'
+    split_url=video_url.split("/")
+    remote_file=split_url[len(split_url)-1]
+    download_video(video_url, local_video_path)
+    signature_ref=connect_signature_database()
+    private_pem,public_pem=generate_key()
+    metadata=extract_metadata(video_url)
+    frames=frame_capture(video_url)
+    signature,combined_data=sign_combined_data(private_pem,user_data,metadata,frames)
+    data={
     "private_pem":private_pem,
     "public_pem":public_pem,
     "signature":signature,
     "combined_data":combined_data
-}
-signature_ref.add(data)
+    }
+    signature_ref.add(data)
+    set_signature_and_public_key(local_video_path,output_video_path,signature,public_pem)
+    upload_video_to_supabase(output_video_path,remote_file)
+    os.remove(local_video_path)
+    os.remove(output_video_path)
 
-set_signature_and_public_key(video_url,signature,public_pem)
-public_key,signature=extract_signature_and_public_key()
-verify_signature(user_data,metadata,frames,signature,public_key)
+def verify_signed_video(user_data,video_url):
+    local_video_path='local_video.mkv'
+    download_video(video_url, local_video_path)
+    public_key,signature=extract_signature_and_public_key(local_video_path)
+    metadata=extract_metadata(local_video_path)
+    frames=frame_capture(local_video_path)
+    verify_signature(user_data,metadata,frames,signature,public_key)
+    os.remove(local_video_path)
+
+def convert_mp4_to_mkv(input_file, output_file):
+    ffmpeg.input(input_file).output(output_file).run()
 
