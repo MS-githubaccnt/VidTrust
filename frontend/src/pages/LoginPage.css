@@ -1,0 +1,64 @@
+.main_div{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.left{
+  display: flex;
+  flex-direction: column;
+  justify-content: left;
+  margin-left:5%;
+}
+
+.right{
+  display: flex;
+  flex-direction: column;
+  margin-right: 8%;
+}
+
+.heading{
+  font-family: "Space Grotesk", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 700;
+  font-style:normal;
+  font-size: 5rem;
+}
+
+.motto{
+    font-family: "Roboto", sans-serif;
+    font-weight: 500;
+    font-style: normal;
+    font-size: 2rem;
+  
+}
+
+span{
+  font-family: "Roboto", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+  color: #00ED64;
+  font-size: 3rem;
+}
+
+.form_heading{
+  font-family: "Space Grotesk", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 700;
+  font-style:normal;
+  font-size: 2rem;
+}
+
+.card{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.form_button{
+  font-family: "Roboto", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+
+  font-size: 3rem;
+}
