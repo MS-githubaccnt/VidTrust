@@ -1,20 +1,10 @@
 import React from 'react';
 import { BrowserRouter, Navigate, Route, RouterProvider, Routes, createBrowserRouter } from 'react-router-dom';
-import { AuthContextProvider, useAuth } from './context/AuthContext';
+import { useAuth } from './context/AuthContext';
 import Callback from './pages/Callback';
 import LoginPage from './pages/LoginPage';
 import Home from './pages/Home';
-
-const router = createBrowserRouter([
-  {
-    path: '/',
-    element: <LoginPage />,
-  },
-  {
-    path: '/auth/callback',
-    element: <Callback />,
-  },
-]);
+import VideoCheck from './pages/VideoCheck';
 
 const App: React.FC = () => {
   const { loggedIn } = useAuth();
@@ -26,6 +16,7 @@ const App: React.FC = () => {
             <Route element={<LoginPage />} path='/' />
             <Route element={loggedIn ? <Home /> : <Navigate to="/"/>} path="/home" /> 
             <Route element={<Callback />} path='/auth/callback' />
+            <Route element={<VideoCheck />} path='/video_check'/>
             </Routes>
         </BrowserRouter>
 

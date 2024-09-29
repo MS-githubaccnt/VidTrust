@@ -2,7 +2,10 @@ from controllers.auth_controllers import get_auth_url, auth_token, check_logged_
 from controllers.video_controllers import video_url as video_url_controller
 from controllers.video_controllers import video_fetch_url as video_fetch_url_controller
 from middleware.auth_middleware import auth_middleware
-from backend.controllers.signature_controllers import sign_combined_data,verify_signature
+from controllers.video_controllers import test_video
+from controllers.video_controllers import delete_video
+
+
 def configure_routes(app):
     @app.route('/auth/logged_in', methods=['GET'])
     def check_logged_in_route():
@@ -25,5 +28,5 @@ def configure_routes(app):
     
     app.route('/auth/url', methods=['GET'])(get_auth_url)
     app.route('/auth/token', methods=['GET'])(auth_token)
-    app.route('/sign',methods=['POST'])(sign_combined_data)
-    app.route('/verify',methods=['POST'])(verify_signature)
+    app.route('/test_video_url', methods=['POST'])(test_video)
+    app.route('/delete_video', methods=['POST'])(delete_video)
