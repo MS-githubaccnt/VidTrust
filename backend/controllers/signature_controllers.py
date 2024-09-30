@@ -115,9 +115,17 @@ def set_signature_and_public_key(local_video_path,output_video_path, signature, 
     output_stream.run(overwrite_output=True)
 
 
-def upload_video_to_supabase(local_file_path, remote_file_name):
+def update_video_on_supabase(local_file_path, remote_file_name):
     with open(local_file_path, "rb") as file:
-        client.storage.from_("video").update(remote_file_name, file)
+        client.storage.from_("videos_to_convert").update(remote_file_name, file)
+
+def upload_video_to_supabase(local_file_path,remote_file_name):
+    with open(local_file_path,"rb") as file:
+        client.storage.from_("videos_to_convert").upload(remote_file_name,file)
+
+def remove_video_from_supabase(local_file_path):
+    client.storage.from_('video').remove(local_file_path)    
+
 
 def load_public_key(pem_data):
     return serialization.load_pem_public_key(
@@ -195,7 +203,7 @@ def upload_signed_video(user_data,video_url):
     }
     signature_ref.add(data)
     set_signature_and_public_key(local_video_path,output_video_path,signature,public_pem)
-    upload_video_to_supabase(output_video_path,remote_file)
+    update_video_on_supabase(output_video_path,remote_file)
     os.remove(local_video_path)
     os.remove(output_video_path)
 
@@ -208,6 +216,11 @@ def verify_signed_video(user_data,video_url):
     verify_signature(user_data,metadata,frames,signature,public_key)
     os.remove(local_video_path)
 
-def convert_mp4_to_mkv(input_file, output_file):
+def convert_mp4_to_mkv(video_url,input_file, output_file):
+    download_video(video_url,input_file)
     ffmpeg.input(input_file).output(output_file).run()
+    upload_video_to_supabase(output_file,output_file)
+    remove_video_from_supabase(input_file)
+    os.remove(input_file)
+    os.remove(output_file)
 
