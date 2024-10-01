@@ -51,12 +51,11 @@ const UploadVideoToS3WithNativeSdk = () => {
 
     const uploadFile1 = async (file: File, bucket: string, setProgress: React.Dispatch<React.SetStateAction<number>>, setUrl: React.Dispatch<React.SetStateAction<string>>) => {
         if (!file) return;
-
         const fileExt = file.name.split('.').pop();
+        if(fileExt==="mkv"){
         const fileName = `${Math.random()}.${fileExt}`;
         const filePath = `${fileName}`;
         console.log("video tak aa gye hai")
-
         try {
             const { data, error } = await supabase.storage
                 .from(bucket)
@@ -64,21 +63,48 @@ const UploadVideoToS3WithNativeSdk = () => {
                     cacheControl: '3600',
                     upsert: false
                 });
-
             if (error) throw error;
-
             const { data: { publicUrl } } = supabase.storage
                 .from(bucket)
                 .getPublicUrl(filePath);
             console.log(data);
             setUrl(publicUrl);
-
             setProgress(100);
-
         } catch (error) {
             console.error('Error uploading file:', error);
             setProgress(0);
         }
+        }
+        else if(fileExt==="mp4"){
+            const fileName = `${Math.random()}.${fileExt}`;
+            const filePath = `${fileName}`;
+            console.log("video tak aa gye hai")
+            try {
+                const { data, error } = await supabase.storage
+                    .from(bucket)
+                    .upload(filePath, file, {
+                        cacheControl: '3600',
+                        upsert: false
+                    });
+                if (error) throw error;
+                const { data: { publicUrl } } = supabase.storage
+                    .from(bucket)
+                    .getPublicUrl(filePath);
+                console.log(data);
+                setUrl(publicUrl);
+                setProgress(100);
+            } catch (error) {
+                console.error('Error uploading file:', error);
+                setProgress(0);
+            }
+            const response = await axios.post(`${serverUrl}/auth/mp4_file_handler`,{
+                url : videoUrl
+            })
+            if(response.status === 200){
+                setVideoUrl(response.data)
+            }
+        }
+        
     }
 
 
@@ -105,7 +131,6 @@ const UploadVideoToS3WithNativeSdk = () => {
                 .getPublicUrl(filePath);
             console.log(data);
             setUrl(publicUrl);
-            // setImageUrl(publicUrl)
             setProgress(100);
 
         } catch (error) {
@@ -191,7 +216,7 @@ const UploadVideoToS3WithNativeSdk = () => {
             <Button
                 variant="contained"
                 color="primary"
-                onClick={() => uploadFile1(selectedFile2, 'image', setProgress2, setImageUrl)}
+                onClick={() => uploadFile2(selectedFile2, 'image', setProgress2, setImageUrl)}
                 disabled={!selectedFile2}
                 sx={{
                     mb: 2,

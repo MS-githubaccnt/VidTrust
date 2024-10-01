@@ -207,12 +207,13 @@ def upload_signed_video(user_data,video_url):
     os.remove(local_video_path)
     os.remove(output_video_path)
 
-def verify_signed_video(user_data,video_url):
+def verify_signed_video(video_url):
     local_video_path='local_video.mkv'
     download_video(video_url, local_video_path)
     public_key,signature=extract_signature_and_public_key(local_video_path)
     metadata=extract_metadata(local_video_path)
     frames=frame_capture(local_video_path)
+    user_data=get_user_data(signature)
     verify_signature(user_data,metadata,frames,signature,public_key)
     os.remove(local_video_path)
 
@@ -223,4 +224,18 @@ def convert_mp4_to_mkv(video_url,input_file, output_file):
     remove_video_from_supabase(input_file)
     os.remove(input_file)
     os.remove(output_file)
+
+def get_user_data(signature):
+    signature_ref = connect_signature_database()
+    query = signature_ref.where('signature', '==', signature)
+    docs = query.stream()
+    results = []
+    for doc in docs:
+        data = doc.to_dict()
+        results.append({
+            'combined_data':data.get('combined_data')
+        })
+    user_data=results[0]['combined_data']['user_data']
+    print(user_data)
+    return user_data
 

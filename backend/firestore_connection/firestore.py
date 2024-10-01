@@ -1,4 +1,5 @@
 from firebase_admin import credentials, firestore, initialize_app
+import firebase_admin 
 import os
 import sys
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -10,9 +11,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-
-cred = credentials.Certificate(credential_path)
-default_app = initialize_app(cred)
+if not firebase_admin._apps:
+  cred = credentials.Certificate(credential_path)
+  default_app = initialize_app(cred)
 db = firestore.client()
 
 
@@ -28,8 +29,6 @@ def video_url_to_firestore():
 def connect_signature_database():
   signature_ref=db.collection('signature')
   return signature_ref
-  logger.info("dsvjhsvkhdsvf gjfv sagvjdfgvfghv dfjv dgjv gh vgfv ghd vghd ghd ghd hgdz ghzfdhd zdgh zdhg h h hzd hd d   zdh zgh d zhfd ")
-  return video_ref
 
 
 def temp_video_url_to_firestore():

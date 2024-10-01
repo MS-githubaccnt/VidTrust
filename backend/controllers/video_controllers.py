@@ -8,6 +8,7 @@ import uuid
 from firestore_connection.firestore     import video_url_to_firestore,temp_video_url_to_firestore
 from botocore.exceptions import NoCredentialsError
 import logging
+from controllers.signature_controllers import convert_mp4_to_mkv,upload_signed_video,verify_signed_video
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,6 @@ config = {
 
 
 def video_url():
-    print("ckdnjdkscdcsnjdksjcdkjcndkscndnkcjdsckdjcdkcsdjcn")
     data = request.json
     title = data.get('title')
     imageUrl = data.get('imageUrl')
@@ -35,15 +35,21 @@ def video_url():
     decoded_token = jwt.decode(token, config['token_secret'],algorithms=['HS256'])
     user_dictionary = decoded_token.get('user')
     email = user_dictionary.get('email')
+    name = user_dictionary.get('name')
     video_struct = {
         "email" :email,
         "title":title,
         "imageUrl":imageUrl,
         "videoUrl":videoUrl
     }
+    user_data = {
+        "email":email,
+        "name":name
+    }
     id = str(uuid.uuid4())
     video_ref = video_url_to_firestore()
     video_ref.document(id).set(video_struct)
+    upload_signed_video(user_data,videoUrl)
     return jsonify({"status": "success", "message": "Data received and uploaded"}), 200
 
 
@@ -77,7 +83,7 @@ def video_fetch_url():
 
         video_ref = video_url_to_firestore()
         query = video_ref.where('email', '==', email)
-        logger.info(f"Query created: {query._filters_pb}")  # Log the query filters
+        logger.info(f"Query created: {query._filters_pb}")
 
         docs = query.stream()
         results = []
@@ -114,6 +120,7 @@ def test_video():
     id = str(uuid.uuid4())
     video_ref = video_url_to_firestore()
     video_ref.document(id).set(video_struct)
+    verify_signed_video()
     return jsonify({"status": "success", "message": "Data received and uploaded"}), 200
 
 
@@ -136,3 +143,13 @@ def delete_video():
         return jsonify({"status": "success", "message": f"Video(s) with name '{name}' deleted successfully"}), 200
     else:
         return jsonify({"status": "not found", "message": f"No video found with name '{name}'"}), 404
+
+def mp4_handler():
+    data = request.json
+    url = data.get('url')
+    if not url:
+        return jsonify({"status": "error", "message": "Url is required"}), 400
+    input_file_name = url.split('/')[-1]
+    output_file_name = input_file_name.split('.')[0] + '.mkv'
+    return_url = convert_mp4_to_mkv(url,input_file_name,output_file_name)
+    return jsonify({"data":f'{return_url}'})

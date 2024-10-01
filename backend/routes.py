@@ -4,6 +4,7 @@ from controllers.video_controllers import video_fetch_url as video_fetch_url_con
 from middleware.auth_middleware import auth_middleware
 from controllers.video_controllers import test_video
 from controllers.video_controllers import delete_video
+from controllers.video_controllers import mp4_handler
 
 
 def configure_routes(app):
@@ -26,6 +27,11 @@ def configure_routes(app):
     def video_fetch_url_route():
         return video_fetch_url_controller()
     
+    @app.route('/auth/mp4_file_handler',methods=['POST'])
+    # @auth_middleware
+    def mp4_handler():
+        return mp4_handler()
+
     app.route('/auth/url', methods=['GET'])(get_auth_url)
     app.route('/auth/token', methods=['GET'])(auth_token)
     app.route('/test_video_url', methods=['POST'])(test_video)
