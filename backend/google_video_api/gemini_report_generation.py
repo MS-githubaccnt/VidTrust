@@ -34,7 +34,7 @@ Suspicious Faces Detected:
 Face detected briefly at 'face_time' with confidence 'face_confidence'. 'else:'
 No suspicious faces detected.
 4. Tampering Detection Summary
-Tampering Detected: 'High Possibility/Low Possiblity'
+Tampering Detected: 'Possible'
 
 Reasons for Potential Tampering Detection: 'if tampering_detected:'
 

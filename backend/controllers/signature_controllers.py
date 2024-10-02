@@ -72,7 +72,7 @@ def encode_frame_to_base64(frame):
 def extract_metadata(video_path):
     probe=ffmpeg.probe(video_path,cmd="C:/ffmpeg/bin/ffprobe.exe")
     video_stream=next((stream for stream in probe['streams'] if stream['codec_type']=='video'),None)
-    print(video_stream)
+    print("this is the verifier's video's metadata",video_stream)
     return video_stream
 
 def extract_signature_and_public_key(video_path):
