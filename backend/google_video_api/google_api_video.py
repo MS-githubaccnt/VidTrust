@@ -5,7 +5,6 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "b27project-e4206a0ff48a.json"
 
 def analyze_video(video_uri):
     client = videointelligence.VideoIntelligenceServiceClient()
-
     features = [
         videointelligence.Feature.SHOT_CHANGE_DETECTION,
         videointelligence.Feature.OBJECT_TRACKING,
@@ -23,7 +22,9 @@ def analyze_video(video_uri):
 
     return result
 
-def detect_potential_tampering(result):
+def detect_potential_tampering(video_uri):
+    result=analyze_video(video_uri)
+    report=[]
     shot_changes = result.annotation_results[0].shot_annotations
     object_annotations = result.annotation_results[0].object_annotations
     face_annotations = result.annotation_results[0].face_detection_annotations
@@ -48,10 +49,10 @@ def detect_potential_tampering(result):
             if face_duration < 0.5:  
                 suspicious_faces.append(face)
 
-    print(f"Average shot duration: {avg_shot_duration:.2f} seconds")
-    print(f"Number of rapid shot changes: {rapid_changes}")
-    print(f"Number of suspiciously brief object appearances: {len(suspicious_objects)}")
-    print(f"Number of suspiciously brief face appearances: {len(suspicious_faces)}")
+    report.append(f"Average shot duration: {avg_shot_duration:.2f} seconds")
+    report.append(f"Number of rapid shot changes: {rapid_changes}")
+    report.append(f"Number of suspiciously brief object appearances: {len(suspicious_objects)}")
+    report.append(f"Number of suspiciously brief face appearances: {len(suspicious_faces)}")
 
     tampering_detected = False
     reasons = []
@@ -69,23 +70,24 @@ def detect_potential_tampering(result):
         reasons.append("Faces with unusually brief appearances detected")
 
     if tampering_detected:
-        print("Potential video tampering detected.")
-        print("Reasons:")
+        report.append("Potential video tampering detected.")
+        report.append("Reasons:")
         for reason in reasons:
-            print(f"- {reason}")
+            report.append(f"- {reason}")
         
         if suspicious_objects:
-            print("Suspicious objects:")
+            report.append("Suspicious objects:")
             for obj in suspicious_objects:
-                print(f"  - {obj.entity.description} (confidence: {obj.confidence:.2f})")
+                report.append(f"  - {obj.entity.description} (confidence: {obj.confidence:.2f})")
         
         if suspicious_faces:
-            print("Suspicious faces:")
+            report.append("Suspicious faces:")
             for face in suspicious_faces:
-                print(f"  - Face detected at {face.tracks[0].segment.start_time_offset.seconds:.2f}s")
+                report.append(f"  - Face detected at {face.tracks[0].segment.start_time_offset.seconds:.2f}s")
     else:
-        print("No clear signs of tampering detected.")
+        report.append("No clear signs of tampering detected.")
 
+    return report
 # video_uri = "gs://deenank_bucket/clone8.mp4"
 # result = analyze_video(video_uri)
 # detect_potential_tampering(result)
