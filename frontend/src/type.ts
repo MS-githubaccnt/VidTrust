@@ -1,6 +1,8 @@
 export type Report = {
     'Signature verification result': string,
-    'Tampering Detection result': VideoTamperingDetectionReport
+    'Tampering Detection result': VideoTamperingDetectionReport,
+    'Audio analysis result':string,
+    'Audio similarity percentage':string
 }
 
 export type VideoTamperingDetectionReport={

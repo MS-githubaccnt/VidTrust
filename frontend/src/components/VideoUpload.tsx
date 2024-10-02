@@ -101,7 +101,8 @@ const UploadVideoToS3WithNativeSdk = () => {
                 url : videoUrl
             })
             if(response.status === 200){
-                setVideoUrl(response.data)
+                console.log(response.data['data'])
+                setVideoUrl(response.data['data'])
             }
         }
         

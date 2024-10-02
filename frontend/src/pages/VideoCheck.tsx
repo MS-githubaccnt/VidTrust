@@ -240,7 +240,9 @@ const VideoCheck: React.FC = () => {
           Report
         </Typography>
         {(json_report!=null)&&(video_tampering_report!=null)&&(<div>
-          <h1>Signature Verification Result : {json_report['Signature verification result']}</h1>
+          <h1>Signature Verification Result :</h1><h2>{json_report['Signature verification result']}</h2>
+          <h1>Audio Comparision Analysis Result:</h1><h2>{json_report['Audio analysis result']}</h2>
+          <h1>Audio Similarity Percentage:</h1><h2>{json_report['Audio similarity percentage']}</h2>
         <h1>Video Tampering Detection Report</h1>
       <h3>Date: {video_tampering_report['Video Tampering Detection Report'].Date}</h3>
 
