@@ -14,16 +14,24 @@ import {
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import HomeIcon from '@mui/icons-material/Home';
+// import {Storage} from '@google-cloud/storage'
+import { sign } from "crypto";
+import {Report,VideoTamperingDetectionReport} from "../type.ts"
+import { json } from "stream/consumers";
 
-const supabase = createClient("", "");
+const supabase = createClient(import.meta.env.VITE_SUPABASE_URL,import.meta.env.VITE_SUPABASE_ANON_KEY);
+// const storage = new Storage();
 
 const VideoCheck: React.FC = () => {
   const [wasVidChecked,setWasVidChecked] = useState<Boolean>(false)
   const navigate = useNavigate();
   const [title, setTitle] = useState<string>("");
+  const [json_report, setReport] = useState<Report|null>(null);
+  const [video_tampering_report,setVideoTamperingReport]=useState<VideoTamperingDetectionReport|null>(null)
   const [progress, setProgress] = useState(0);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string>("");
+  // const [signedUrl, setSignedUrl] = useState<string>("");
   const [isSubmitValid, setIsSubmitValid] = useState<boolean>(false);
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,7 +49,7 @@ const VideoCheck: React.FC = () => {
 
     const fileExt = selectedFile.name.split('.').pop();
     const fileName = `${Math.random()}.${fileExt}`;
-    const filePath = `${fileName}+${selectedFile.name}`;
+    const filePath = `${fileName}`;
 
     try {
       const { data, error } = await supabase.storage
@@ -52,12 +60,28 @@ const VideoCheck: React.FC = () => {
         });
 
       if (error) throw error;
+      
+      // const gcsResponse = await storage.bucket("deenank_bucket").file(filePath).save(
+      //   selectedFile.stream(),{
+      //     metadata:{
+      //       contentType:selectedFile.type,
+      //     }
+      //   })
 
+      // if (!gcsResponse) {
+      //   throw new Error("Error uploading to Google Cloud Storage");
+      // }
+      
+      // const [signedUrl]=await storage.bucket("deenank_bucket").file(filePath).getSignedUrl({
+      //   action: 'read',
+      //   expires: Date.now()+15*60*1000,
+      // })
       const { data: { publicUrl } } = supabase.storage
         .from('videos_to_check')
         .getPublicUrl(filePath);
-
+        console.log(filePath,fileName,publicUrl)
       setVideoUrl(publicUrl);
+      // setSignedUrl(signedUrl);
       setIsSubmitValid(true);
       setProgress(100);
     } catch (error) {
@@ -70,15 +94,24 @@ const VideoCheck: React.FC = () => {
     e.preventDefault();
     const storeStruct = {
       name: title,
-      videoUrl: videoUrl
+      videoUrl: videoUrl,
+      // signedUrl: signedUrl
     }
     const response = await axios.post(`${serverUrl}/test_video_url`, storeStruct)
     if (response.status === 200) {
-      setProgress(0)
-      setVideoUrl("")
-      setTitle("")
-      setSelectedFile(null)
-      setIsSubmitValid(false)
+      // setProgress(0)
+      // setVideoUrl("")
+      // // setSignedUrl("")
+      // setTitle("")
+      // setSelectedFile(null)
+      // setIsSubmitValid(false)
+      console.log("API Response:", response.data);
+      const json_report=response.data.message
+      const video_tampering_report=JSON.parse(json_report['Tampering detection result'].replace(/```json|```/g, '').trim())
+      console.log(json_report,video_tampering_report)
+      setReport(json_report)
+      setVideoTamperingReport(video_tampering_report)
+      console.log(response.data)
     }
   }
 
@@ -136,7 +169,7 @@ const VideoCheck: React.FC = () => {
       />
       
       <input
-        accept="video/*"
+        accept="video/mkv"
         style={{ display: 'none' }}
         id="raised-button-file"
         type="file"
@@ -202,9 +235,48 @@ const VideoCheck: React.FC = () => {
       </Button>
       
       <Paper elevation={3} sx={{ p: 2, mb: 4, backgroundColor: 'rgba(0, 0, 0, 0.4)', color: 'white' }}>
+        <div style={{height:'200px',overflowY:'scroll'}}>
         <Typography variant="h6" sx={{ fontFamily: 'Space Grotesk, sans-serif' }}>
           Report
         </Typography>
+        {(json_report!=null)&&(video_tampering_report!=null)&&(<div>
+          <h1>Signature Verification Result : {json_report['Signature verification result']}</h1>
+        <h1>Video Tampering Detection Report</h1>
+      <h3>Date: {video_tampering_report['Video Tampering Detection Report'].Date}</h3>
+
+      <h2>1. Shot Change Analysis</h2>
+      <p>Average Shot Duration: {video_tampering_report['Video Tampering Detection Report']["1. Shot Change Analysis"]["Average Shot Duration"]}</p>
+      <p>Number of Rapid Shot Changes: {video_tampering_report['Video Tampering Detection Report']["1. Shot Change Analysis"]["Number of Rapid Shot Changes"]}</p>
+
+      <h2>2. Object Tracking Analysis</h2>
+      <p>Total Number of Objects Tracked: {video_tampering_report['Video Tampering Detection Report']["2. Object Tracking Analysis"]["Total Number of Objects Tracked"]}</p>
+      <p>Number of Suspiciously Brief Object Appearances: {video_tampering_report['Video Tampering Detection Report']["2. Object Tracking Analysis"]["Number of Suspiciously Brief Object Appearances"]}</p>
+      <h3>Suspicious Objects Detected:</h3>
+      <ul>
+        {video_tampering_report['Video Tampering Detection Report']["2. Object Tracking Analysis"]["Suspicious Objects Detected"].map((obj, index) => (
+          <li key={index}>
+            {obj.Object} (Confidence: {obj.Confidence})
+          </li>
+        ))}
+      </ul>
+
+      <h2>3. Face Detection Analysis</h2>
+      <p>Total Faces Detected: {video_tampering_report['Video Tampering Detection Report']["3. Face Detection Analysis"]["Total Faces Detected"]}</p>
+      <p>Number of Suspiciously Brief Face Appearances: {video_tampering_report['Video Tampering Detection Report']["3. Face Detection Analysis"]["Number of Suspiciously Brief Face Appearances"]}</p>
+      <p>{video_tampering_report['Video Tampering Detection Report']["3. Face Detection Analysis"]["Suspicious Faces Detected"]}</p>
+
+      <h2>4. Tampering Detection Summary</h2>
+      <p>Tampering Detected: {video_tampering_report['Video Tampering Detection Report']["4. Tampering Detection Summary"]["Tampering Detected"]}</p>
+      <h3>Reasons for Potential Tampering Detection:</h3>
+      <ul>
+        {video_tampering_report['Video Tampering Detection Report']["4. Tampering Detection Summary"]["Reasons for Potential Tampering Detection"].map((reason, index) => (
+          <li key={index}>{reason}</li>
+        ))}
+      </ul>
+        </div>)}
+        
+        </div>
+
       </Paper>
       
       <Button
