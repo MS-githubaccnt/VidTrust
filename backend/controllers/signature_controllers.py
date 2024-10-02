@@ -117,11 +117,11 @@ def set_signature_and_public_key(local_video_path,output_video_path, signature, 
 
 def update_video_on_supabase(local_file_path, remote_file_name):
     with open(local_file_path, "rb") as file:
-        client.storage.from_("videos_to_convert").update(remote_file_name, file)
+        client.storage.from_("video").update(remote_file_name, file)
 
 def upload_video_to_supabase(local_file_path,remote_file_name):
     with open(local_file_path,"rb") as file:
-        client.storage.from_("videos_to_convert").upload(remote_file_name,file)
+        client.storage.from_("video").upload(remote_file_name,file)
 
 def remove_video_from_supabase(local_file_path):
     client.storage.from_('video').remove(local_file_path)    
@@ -175,9 +175,9 @@ def verify_signature(user_data,metadata,frames,signature,public_pem):
             ),
             hashes.SHA256()
         )
-        print("The video is authentic.")
+        return "The video is authentic."
     except InvalidSignature:
-        print("The video has been tampered with or is not authentic.")
+        return "The video has been tampered with or is not authentic."
 
 def download_video(url, local_path):
     response = requests.get(url)
@@ -189,11 +189,13 @@ def upload_signed_video(user_data,video_url):
     output_video_path='output_video.mkv'
     split_url=video_url.split("/")
     remote_file=split_url[len(split_url)-1]
+    print("ye hai tumhari remote file",remote_file)
     download_video(video_url, local_video_path)
     signature_ref=connect_signature_database()
     private_pem,public_pem=generate_key()
-    metadata=extract_metadata(video_url)
-    frames=frame_capture(video_url)
+    print(local_video_path)
+    metadata=extract_metadata(local_video_path)
+    frames=frame_capture(local_video_path)
     signature,combined_data=sign_combined_data(private_pem,user_data,metadata,frames)
     data={
     "private_pem":private_pem,
@@ -214,8 +216,9 @@ def verify_signed_video(video_url):
     metadata=extract_metadata(local_video_path)
     frames=frame_capture(local_video_path)
     user_data=get_user_data(signature)
-    verify_signature(user_data,metadata,frames,signature,public_key)
+    signature_verification_result=verify_signature(user_data,metadata,frames,signature,public_key)
     os.remove(local_video_path)
+    return signature_verification_result
 
 def convert_mp4_to_mkv(video_url,input_file, output_file):
     download_video(video_url,input_file)
@@ -224,6 +227,7 @@ def convert_mp4_to_mkv(video_url,input_file, output_file):
     remove_video_from_supabase(input_file)
     os.remove(input_file)
     os.remove(output_file)
+    return video_url[:-4]+".mkv"
 
 def get_user_data(signature):
     signature_ref = connect_signature_database()
@@ -235,7 +239,8 @@ def get_user_data(signature):
         results.append({
             'combined_data':data.get('combined_data')
         })
-    user_data=results[0]['combined_data']['user_data']
-    print(user_data)
+    user_data=json.loads(results[0]['combined_data'])['user_data']
+
+    print("ye rha tumhara user_data",user_data)
     return user_data
 
