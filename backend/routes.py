@@ -1,11 +1,10 @@
+from google_video_api.google_api_video import detect_potential_tampering
 from controllers.auth_controllers import get_auth_url, auth_token, check_logged_in as check_logged_in_controller, logged_out
-from controllers.video_controllers import video_url as video_url_controller
+from controllers.video_controllers import mp4_converter, video_url as video_url_controller
 from controllers.video_controllers import video_fetch_url as video_fetch_url_controller
 from middleware.auth_middleware import auth_middleware
 from controllers.video_controllers import test_video
 from controllers.video_controllers import delete_video
-from controllers.video_controllers import mp4_handler
-
 
 def configure_routes(app):
     @app.route('/auth/logged_in', methods=['GET'])
@@ -30,7 +29,8 @@ def configure_routes(app):
     @app.route('/auth/mp4_file_handler',methods=['POST'])
     # @auth_middleware
     def mp4_handler():
-        return mp4_handler()
+        return mp4_converter()
+    
 
     app.route('/auth/url', methods=['GET'])(get_auth_url)
     app.route('/auth/token', methods=['GET'])(auth_token)
