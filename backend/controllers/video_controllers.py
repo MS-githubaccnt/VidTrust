@@ -5,11 +5,13 @@ from urllib.parse import urlencode
 import jwt
 import requests
 import uuid
+from google_video_api.gemini_report_generation import generate_report
+from google_video_api.google_api_video import detect_potential_tampering
 from firestore_connection.firestore     import video_url_to_firestore,temp_video_url_to_firestore
-from botocore.exceptions import NoCredentialsError
 import logging
-from controllers.signature_controllers import convert_mp4_to_mkv,upload_signed_video,verify_signed_video
-
+from controllers.signature_controllers import convert_mp4_to_mkv, download_video,upload_signed_video,verify_signed_video
+from google.cloud import storage
+from datetime import timedelta
 logger = logging.getLogger(__name__)
 
 config = {
@@ -49,7 +51,8 @@ def video_url():
     id = str(uuid.uuid4())
     video_ref = video_url_to_firestore()
     video_ref.document(id).set(video_struct)
-    upload_signed_video(user_data,videoUrl)
+    print("ye lo tumhare upload signed video function ke arguments",      user_data,videoUrl)
+    upload_signed_video(user_data,videoUrl['data'])
     return jsonify({"status": "success", "message": "Data received and uploaded"}), 200
 
 
@@ -113,16 +116,25 @@ def test_video():
     data = request.json
     name = data.get('name')
     videoUrl = data.get('videoUrl')
+    # signedUrl=data.get('signedUrl')
     video_struct = {
         "name" :name,
-        "videoUrl":videoUrl
+        "videoUrl":videoUrl,
+        # "signedUrl":signedUrl
     }
     id = str(uuid.uuid4())
     video_ref = video_url_to_firestore()
     video_ref.document(id).set(video_struct)
-    verify_signed_video()
-    return jsonify({"status": "success", "message": "Data received and uploaded"}), 200
-
+    signature_verification_result=verify_signed_video(videoUrl)
+    signedUrl=upload_to_google_bucket(videoUrl)
+    print("ye lo tumhari signedUrl",signedUrl)
+    tampering_detection_result=detect_potential_tampering(signedUrl)
+    report=generate_report(tampering_detection_result)
+    message = {
+        'Signature verification result': signature_verification_result,
+        'Tampering detection result': report
+    }
+    return jsonify({"status": "success", "message": message}), 200
 
 def delete_video():
     data = request.json
@@ -144,12 +156,29 @@ def delete_video():
     else:
         return jsonify({"status": "not found", "message": f"No video found with name '{name}'"}), 404
 
-def mp4_handler():
+def mp4_converter():
     data = request.json
     url = data.get('url')
     if not url:
         return jsonify({"status": "error", "message": "Url is required"}), 400
+    print("ye hai tumhari url",url)
     input_file_name = url.split('/')[-1]
-    output_file_name = input_file_name.split('.')[0] + '.mkv'
+    output_file_name = input_file_name[:-4] + '.mkv'
+    print("mai convert karne jaa rha hu",input_file_name,output_file_name)
     return_url = convert_mp4_to_mkv(url,input_file_name,output_file_name)
+    print("maine return url dhoondh li",return_url)
     return jsonify({"data":f'{return_url}'})
+
+def upload_to_google_bucket(video_url):
+    filename=video_url.split("/")[-1]
+    print("ye hai tumhara video url aur filename",video_url,filename)
+    local_video_path='local_video_path.mkv'
+    download_video(video_url,local_video_path)
+    storage_client=storage.Client()
+    storage_client.bucket("deenank_bucket").blob(filename).upload_from_filename(local_video_path)
+    url = f'gs://deenank_bucket/{filename}'
+    os.remove(local_video_path)
+    return url
+
+
+    
