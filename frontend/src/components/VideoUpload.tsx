@@ -4,7 +4,7 @@ import axios from 'axios';
 import { serverUrl } from '../utils/api';
 import { Button, TextField, Typography, Box, LinearProgress } from '@mui/material';
 
-const supabase = createClient("", "");
+const supabase = createClient(import.meta.env.VITE_SUPABASE_URL,import.meta.env.VITE_SUPABASE_ANON_KEY);
 
 
 const UploadVideoToS3WithNativeSdk = () => {
@@ -216,7 +216,7 @@ const UploadVideoToS3WithNativeSdk = () => {
             <Button
                 variant="contained"
                 color="primary"
-                onClick={() => uploadFile2(selectedFile2, 'image', setProgress2, setImageUrl)}
+                onClick={() => uploadFile2(selectedFile2, 'images', setProgress2, setImageUrl)}
                 disabled={!selectedFile2}
                 sx={{
                     mb: 2,
