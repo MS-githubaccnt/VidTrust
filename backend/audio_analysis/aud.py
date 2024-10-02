@@ -10,9 +10,9 @@ def extract_audio(video_path, output_audio_path):
     clip = VideoFileClip(video_path)
     clip.audio.write_audiofile(output_audio_path)
 
-def generate_perlin_noise(duration, sample_rate=44100,seed = 42):
+def generate_perlin_noise(num_samples, sample_rate=44100,seed = 42):
     noise_generator = OpenSimplex(seed)
-    samples = np.array([noise_generator.noise2(i / sample_rate, 0) for i in range(int(sample_rate * duration))])
+    samples = np.array([noise_generator.noise2(i / sample_rate, 0) for i in range(num_samples)])
     return samples
 
 def add_noise_to_audio(audio_path, output_audio_path, noise_level=0.1):  
@@ -23,7 +23,7 @@ def add_noise_to_audio(audio_path, output_audio_path, noise_level=0.1):
     
     samples = np.array(audio.get_array_of_samples())
     
-    noise = generate_perlin_noise(len(samples) / audio.frame_rate)
+    noise = generate_perlin_noise(len(samples) , audio.frame_rate)
     
     max_audio_amplitude = np.max(np.abs(samples))
     noise = noise * max_audio_amplitude
@@ -99,10 +99,10 @@ def plot_audio_waveforms(original_audio_path, new_audio_path):
     plt.savefig('plot.png', bbox_inches='tight')
 
 
-extract_audio("test_video.mp4", "original_audio.wav")
-print("Now adding noise to the extracted audio")
-add_noise_to_audio("original_audio.wav", "noisy_audio.wav", 0.5)
-print("Noise addition done")
-print("Imposing onto original video and storing to new file")
-replace_audio_in_video("test_video.mp4", "noisy_audio.wav", "output_video_with_noisy_audio.mp4")
-plot_audio_waveforms("original_audio.wav", "noisy_audio.wav")
+# extract_audio("test_video.mp4", "original_audio.wav")
+# print("Now adding noise to the extracted audio")
+# add_noise_to_audio("original_audio.wav", "noisy_audio.wav", 0.5)
+# print("Noise addition done")
+# print("Imposing onto original video and storing to new file")
+# replace_audio_in_video("test_video.mp4", "noisy_audio.wav", "output_video_with_noisy_audio.mp4")
+# plot_audio_waveforms("original_audio.wav", "noisy_audio.wav")

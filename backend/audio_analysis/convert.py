@@ -27,7 +27,7 @@ def stereo_to_mono(input_file, output_file):
     print(f"Converted {input_file} to mono. Saved as {output_file}")
 
 # Example usage
-input_file = "original_audio.wav"
-output_file = "output_mono.wav"
+# input_file = "original_audio.wav"
+# output_file = "output_mono.wav"
 
-stereo_to_mono(input_file, output_file)
+# stereo_to_mono(input_file, output_file)

@@ -1,3 +1,4 @@
+import wave
 from google.cloud import speech_v1p1beta1 as speech
 import os
 import io
@@ -9,15 +10,20 @@ credentials = service_account.Credentials.from_service_account_file(client_file)
 client = speech.SpeechClient(credentials=credentials)
 
 def get_transcript(url):
-    gcs_uri = url
+    with wave.open(url, 'rb') as audio_file:
+        channels = audio_file.getnchannels()
+        print(f"{url} has {channels} channel(s)")
+
     config = speech.RecognitionConfig(
         encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
         sample_rate_hertz=44100,
         language_code='en-US',
         model='video'
     )
+    with io.open(url, "rb") as audio_file:
+        content = audio_file.read()
 
-    audio = speech.RecognitionAudio(uri=gcs_uri)
+    audio = speech.RecognitionAudio(content=content)
     operation = client.long_running_recognize(config=config, audio=audio)
 
     print("Waiting for operation to complete ...")
@@ -47,7 +53,7 @@ def compare_transcript(url1, url2):
     
     return similarity_percentage
 
-# Example usage
-url1 = "gs://deenank_bucket/output_mono.wav"
-url2 = "gs://deenank_bucket/output_mono.wav"
-similarity = compare_transcript(url1, url2)
+# # Example usage
+# url1 = "gs://deenank_bucket/output_mono.wav"
+# url2 = "gs://deenank_bucket/output_mono.wav"
+# similarity = compare_transcript(url1, url2)
