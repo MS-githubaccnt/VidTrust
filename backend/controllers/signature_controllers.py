@@ -185,8 +185,8 @@ def download_video(url, local_path):
         file.write(response.content)
 
 def upload_signed_video(user_data,video_url):
-    local_video_path = 'local_video.mkv'
-    output_video_path='output_video.mkv'
+    local_video_path = 'local_video_sign.mkv'
+    output_video_path='output_video_sign.mkv'
     split_url=video_url.split("/")
     remote_file=split_url[len(split_url)-1]
     print("ye hai tumhari remote file",remote_file)
@@ -201,24 +201,25 @@ def upload_signed_video(user_data,video_url):
     "private_pem":private_pem,
     "public_pem":public_pem,
     "signature":signature,
-    "combined_data":combined_data
+    "combined_data":combined_data,
+    "video_url":video_url
     }
     signature_ref.add(data)
     set_signature_and_public_key(local_video_path,output_video_path,signature,public_pem)
     update_video_on_supabase(output_video_path,remote_file)
-    os.remove(local_video_path)
+    # os.remove(local_video_path)
     os.remove(output_video_path)
 
 def verify_signed_video(video_url):
-    local_video_path='local_video.mkv'
+    local_video_path='local_video_check.mkv'
     download_video(video_url, local_video_path)
     public_key,signature=extract_signature_and_public_key(local_video_path)
     metadata=extract_metadata(local_video_path)
     frames=frame_capture(local_video_path)
-    user_data=get_user_data(signature)
+    user_data,original_video_url=get_user_and_video_data(signature)
     signature_verification_result=verify_signature(user_data,metadata,frames,signature,public_key)
     os.remove(local_video_path)
-    return signature_verification_result
+    return signature_verification_result,original_video_url
 
 def convert_mp4_to_mkv(video_url,input_file, output_file):
     download_video(video_url,input_file)
@@ -229,7 +230,7 @@ def convert_mp4_to_mkv(video_url,input_file, output_file):
     os.remove(output_file)
     return video_url[:-4]+".mkv"
 
-def get_user_data(signature):
+def get_user_and_video_data(signature):
     signature_ref = connect_signature_database()
     query = signature_ref.where('signature', '==', signature)
     docs = query.stream()
@@ -237,10 +238,11 @@ def get_user_data(signature):
     for doc in docs:
         data = doc.to_dict()
         results.append({
-            'combined_data':data.get('combined_data')
+            'combined_data':data.get('combined_data'),
+            'video_url': data.get('video_url')
         })
     user_data=json.loads(results[0]['combined_data'])['user_data']
-
-    print("ye rha tumhara user_data",user_data)
-    return user_data
+    video_url=results[0]['video_url']
+    print("ye rha tumhara user_data aur video_url",user_data,video_url)
+    return user_data,video_url
 
