@@ -128,34 +128,24 @@ def test_video():
     data = request.json
     name = data.get('name')
     videoUrl = data.get('videoUrl')
-    # signedUrl=data.get('signedUrl')
     video_struct = {
         "name" :name,
         "videoUrl":videoUrl,
-        # "signedUrl":signedUrl
     }
     id = str(uuid.uuid4())
     video_ref = video_url_to_firestore()
     video_ref.document(id).set(video_struct)
     def deepfake_checking(frames):
         deepfake_report=0
-        deepfake_check_array=[]  #  array to store result of each frame
+        deepfake_check_array=[]
         for _ in frames:
             deepfake_check_array.append(check_deepfake_image(_))
         real=fake=0
         for _ in deepfake_check_array:
             if _:real+=1
             else:fake+=1
-        deepfake_report=fake/(real+fake) #  % changes of being fake
+        deepfake_report=fake/(real+fake)
         return deepfake_report
-
-    # message = {
-    #     'Signature verification result': signature_verification_result,
-    #     'Tampering detection result': video_intelligence_report,
-    #     'Audio analysis result':audio_analysis_report,
-    #     'Audio similarity percentage':similarity_percentage,
-    #     '% deepfake chances':deepfake_report
-    # }
     signature_verification_result,original_video_url,is_video,frames=verify_signed_video(videoUrl)
     if is_video:
         signedUrl=upload_to_google_bucket(videoUrl)
@@ -164,12 +154,22 @@ def test_video():
         tampering_detection_result=detect_potential_tampering(signedUrl)
         video_intelligence_report=generate_report(tampering_detection_result)
         deepfake_value=deepfake_checking(frames)
+        from backend.splicing_and_watermarking.splicing_check import extract_frames, compute_background, classify_frames, extract_noise, analyze_splicing
+        from backend.splicing_and_watermarking.watermarking import create_text_image, extract_watermark_from_video
+        pframes = extract_frames(videoUrl)
+        bg = compute_background(pframes)
+        mframes, sframes = classify_frames(pframes, bg)
+        residual_noise = [extract_noise(frame) for frame in pframes]
+        spce_vals = analyze_splicing(pframes, sframes, residual_noise)
+        watermark_img = create_text_image("DemoWatermark", 100, 100)
+        extract_watermark_from_video(videoUrl, prefix="extracted_watermarks", duration=10, fps=30, img_size=(100, 100))
         message = {
             'Signature verification result': signature_verification_result,
             'Tampering detection result': video_intelligence_report,
             'Audio analysis result':audio_analysis_report,
             'Audio similarity percentage':similarity_percentage,
-            '% deepfake chances':deepfake_value
+            '% deepfake chances':deepfake_value,
+            'SPCE values': spce_vals
         }
         return jsonify({"status": "success", "message": message,"is_video":True}), 200
     elif not is_video:
@@ -184,6 +184,7 @@ def test_video():
             '% deepfake chances':deepfake_value
         }
         return jsonify({"status": "success", "message": message,"is_video":False}), 200
+
 def delete_video():
     data = request.json
     name = data.get('name')
