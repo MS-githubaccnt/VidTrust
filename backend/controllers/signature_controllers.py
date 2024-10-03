@@ -162,9 +162,12 @@ def sign_combined_data(private_pem,user_data,metadata,frames):
     print(signature)
     return signature,combined_data
 
-def verify_signature(user_data,metadata,frames,signature,public_pem):
+def verify_signature(user_data,metadata,frames,signature,public_pem,metadata_original):
     public_key = load_public_key(public_pem)  
     combined_data=combine_data(user_data,metadata,frames)
+    print(signature,public_key)
+    print("ye hai tumhara original metadata",metadata_original)
+    print("ye hai tumhara naya metadata",metadata)
     try:
         public_key.verify(
             signature,
@@ -175,8 +178,10 @@ def verify_signature(user_data,metadata,frames,signature,public_pem):
             ),
             hashes.SHA256()
         )
+        print("authentic")
         return "The video is authentic."
     except InvalidSignature:
+        print("not authentic")
         return "The video has been tampered with or is not authentic."
 
 def download_video(url, local_path):
@@ -216,8 +221,11 @@ def verify_signed_video(video_url):
     public_key,signature=extract_signature_and_public_key(local_video_path)
     metadata=extract_metadata(local_video_path)
     frames=frame_capture(local_video_path)
-    user_data,original_video_url=get_user_and_video_data(signature)
-    signature_verification_result=verify_signature(user_data,metadata,frames,signature,public_key)
+    user_data,original_video_url,metadata_original=get_user_and_video_data(signature)
+    metadata['start_pts']=metadata_original['start_pts']
+    metadata['start_time']=metadata_original['start_time']
+    metadata['tags']['DURATION']=metadata_original['tags']['DURATION']
+    signature_verification_result=verify_signature(user_data,metadata,frames,signature,public_key,metadata_original)
     os.remove(local_video_path)
     return signature_verification_result,original_video_url
 
@@ -243,6 +251,8 @@ def get_user_and_video_data(signature):
         })
     user_data=json.loads(results[0]['combined_data'])['user_data']
     video_url=results[0]['video_url']
+    metadata=json.loads(results[0]['combined_data'])['metadata']
+
     print("ye rha tumhara user_data aur video_url",user_data,video_url)
-    return user_data,video_url
+    return user_data,video_url,metadata
 
