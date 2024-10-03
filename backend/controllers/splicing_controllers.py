@@ -25,7 +25,16 @@ def extract_frames(video_file):
 
 
 def compute_background(frames):
-    return np.mean(frames, axis=0)
+    backSub = cv.createBackgroundSubtractorMOG2(history=100, varThreshold=16, detectShadows=False)
+    
+    for frame in frames:
+        _ = backSub.apply((frame * 255).astype(np.uint8)) 
+    background = backSub.getBackgroundImage()
+    if background is not None:
+        background = cv.cvtColor(background, cv.COLOR_BGR2RGB)
+        return background / 255.0
+    else:
+        raise ValueError("Failed to compute background using GMM.")
 
 
 def classify_frames(pframes, gmm_bg):
