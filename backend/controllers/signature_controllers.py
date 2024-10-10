@@ -230,7 +230,7 @@ def upload_signed_video(user_data,video_url):
     print(local_video_path)
     metadata=extract_metadata(local_video_path)
     frames=frame_capture(local_video_path)
-    signature,combined_data=sign_combined_data(private_pem,user_data,metadata,frames)
+    signature,combined_data=sign_combined_data  (private_pem,user_data,metadata,frames)
     data={
     "private_pem":private_pem,
     "public_pem":public_pem,

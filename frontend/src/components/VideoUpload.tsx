@@ -8,6 +8,8 @@ const supabase = createClient(import.meta.env.VITE_SUPABASE_URL,import.meta.env.
 
 
 const UploadVideoToS3WithNativeSdk = () => {
+    const [video_exists,setVideo_exists] = useState<Boolean>(false);
+    const [video_exists_error,setVideo_exists_error] = useState<string>("");
     const [title, setTitle] = useState<string>("");
     const [progress1, setProgress1] = useState(0);
     const [progress2, setProgress2] = useState(0);
@@ -31,20 +33,37 @@ const UploadVideoToS3WithNativeSdk = () => {
 
     const handleFinalSubmit = async (e: any) => {
         e.preventDefault();
+        var date_stamp = new Date()
+        const date = `${date_stamp.getDate()} - ${date_stamp.getMonth()} - ${date_stamp.getFullYear()}`
         var storeStruct = {
             title: title,
             imageUrl: imageUrl,
-            videoUrl: videoUrl
+            videoUrl: videoUrl,
+            date:date,
         }
         const response = await axios.post(`${serverUrl}/auth/video_url`, storeStruct)
         if (response.status === 200) {
-            setImageUrl("");
-            setProgress1(0)
-            setProgress2(0)
-            setVideoUrl("")
-            setTitle("")
-            setSelectedFile1(null)
-            setSelectedFile2(null)
+            if(response.data.status === 'success'){
+                setImageUrl("");
+                setProgress1(0)
+                setProgress2(0)
+                setVideoUrl("")
+                setTitle("")
+                setSelectedFile1(null)
+                setSelectedFile2(null)
+            }
+            else if (response.data.status === 'failure'){
+                setVideo_exists(true)
+                setVideo_exists_error(response.data.message)
+                setImageUrl("");
+                setProgress1(0)
+                setProgress2(0)
+                setVideoUrl("")
+                setTitle("")
+                setSelectedFile1(null)
+                setSelectedFile2(null)
+            }
+            
         }
 
     }
@@ -92,7 +111,7 @@ const UploadVideoToS3WithNativeSdk = () => {
                     .getPublicUrl(filePath);
                 console.log(data);
                 setUrl(publicUrl);
-                setProgress(100);
+                // setProgress(100);
             } catch (error) {
                 console.error('Error uploading file:', error);
                 setProgress(0);
@@ -102,8 +121,10 @@ const UploadVideoToS3WithNativeSdk = () => {
             })
             if(response.status === 200){
                 console.log(response.data['data'])
-                setVideoUrl(response.data['data'])
+                setUrl(response.data['data'])
+                setProgress(100)
             }
+
         }
         
     }
@@ -252,6 +273,7 @@ const UploadVideoToS3WithNativeSdk = () => {
         >
             Submit
         </Button>
+        {video_exists ? `${video_exists_error}`:null}
     </Box>
 }
 

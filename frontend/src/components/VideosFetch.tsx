@@ -8,6 +8,7 @@ interface VideoUrl {
   title: string;
   imageUrl: string;
   videoUrl: string;
+  date:string;
 }
 
 const VideosFetch: React.FC = () => {
@@ -76,6 +77,7 @@ const VideosFetch: React.FC = () => {
               >
                 Play
               </button>
+              <h3 style={styles.cardTitle}>{video.date}</h3>
             </div>
           </div>
         ))}
@@ -86,6 +88,10 @@ const VideosFetch: React.FC = () => {
 
 const styles = {
   container: {
+    position : 'absolute' as const,
+    right:0,
+    top:0,
+    left:250,
     display: 'flex',
     flexDirection: 'column' as const,
     alignItems: 'center',
@@ -94,7 +100,7 @@ const styles = {
     borderRadius: '15px',
     boxShadow: '0 0 10px 5px rgba(0, 237, 100, 0.3)',
     backdropFilter: 'blur(5px)',
-    maxWidth: '1200px',
+    maxWidth: '1150px',
     margin: '0 auto',
   },
   grid: {
