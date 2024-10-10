@@ -44,24 +44,53 @@ def generate_key():
     print("Public and Private keys generated successfully.", private_pem,public_pem)
     return private_pem,public_pem
 
-def frame_capture(path):
-    cap=cv2.VideoCapture(path)
-    fps=cap.get(cv2.CAP_PROP_FPS)
-    frame_interval=int(fps)
-    frames=[]
-    frame_idx=0
+# def frame_capture(path):
+#     cap=cv2.VideoCapture(path)
+#     fps=cap.get(cv2.CAP_PROP_FPS)
+#     frame_interval=int(fps)
+#     frames=[]
+#     frame_idx=0
+
+#     while True:
+#         cap.set(cv2.CAP_PROP_POS_FRAMES,frame_idx)
+#         ret,frame=cap.read()
+#         if not ret:
+#             break
+
+#         frames.append(frame)
+#         frame_idx+=frame_interval
+
+#     cap.release()
+#     return frames
+
+def frame_capture(path: str) -> List:
+    """
+    Captures frames from a video file at intervals based on the video's frames per second (FPS).
+    
+    Args:
+        path (str): The file path of the video to be processed.
+
+    Returns:
+        List: A list of frames captured from the video with a rate 1 frame per second. 
+    """
+    cap = cv2.VideoCapture(path)
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    frame_interval = int(fps)
+    frames: List = []
+    frame_idx = 0
 
     while True:
-        cap.set(cv2.CAP_PROP_POS_FRAMES,frame_idx)
-        ret,frame=cap.read()
+        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+        ret, frame = cap.read()
         if not ret:
             break
 
         frames.append(frame)
-        frame_idx+=frame_interval
+        frame_idx += frame_interval
 
     cap.release()
     return frames
+
 
 def encode_frame_to_base64(frame):
     frame_resized = cv2.resize(frame, (640, 360), interpolation=cv2.INTER_AREA)
@@ -209,25 +238,57 @@ def upload_signed_video(user_data,video_url):
     "combined_data":combined_data,
     "video_url":video_url
     }
-    signature_ref.add(data)
-    set_signature_and_public_key(local_video_path,output_video_path,signature,public_pem)
-    update_video_on_supabase(output_video_path,remote_file)
-    # os.remove(local_video_path)
-    os.remove(output_video_path)
+    query = signature_ref.where('signature', '==', signature)
+    docs = query.stream()
+    results = []
+    for doc in docs:
+        data = doc.to_dict()
+        results.append({
+            'combined_data':data.get('combined_data'),
+            'video_url': data.get('video_url')
+        })
+    if len(results) == 0:
+        signature_ref.add(data)
+        set_signature_and_public_key(local_video_path,output_video_path,signature,public_pem)
+        update_video_on_supabase(output_video_path,remote_file)
+        # os.remove(local_video_path)
+        os.remove(output_video_path)
+        return {'already_uploaded':False}
+    elif len(results) != 0:
+        return {'already_uploaded':True}
 
 def verify_signed_video(video_url):
     local_video_path='local_video_check.mkv'
     download_video(video_url, local_video_path)
-    public_key,signature=extract_signature_and_public_key(local_video_path)
-    metadata=extract_metadata(local_video_path)
-    frames=frame_capture(local_video_path)
-    user_data,original_video_url,metadata_original=get_user_and_video_data(signature)
-    metadata['start_pts']=metadata_original['start_pts']
-    metadata['start_time']=metadata_original['start_time']
-    metadata['tags']['DURATION']=metadata_original['tags']['DURATION']
-    signature_verification_result=verify_signature(user_data,metadata,frames,signature,public_key,metadata_original)
+    public_key, signature = extract_signature_and_public_key(local_video_path)
+    metadata = extract_metadata(local_video_path)
+    frames = frame_capture(local_video_path)
+    user_data, original_video_url, metadata_original = get_user_and_video_data(signature)
+    # Check if it's a short clip
+    is_short_clip = metadata['tags']['DURATION'] < metadata_original['tags']['DURATION']
+    if is_short_clip:
+        signature_verification_result = verify_shorts(local_video_path, public_key, signature, user_data, metadata, metadata_original)
+        is_video = False
+    else:
+        
+        metadata['start_pts'] = metadata_original['start_pts']
+        metadata['start_time'] = metadata_original['start_time']
+        metadata['tags']['DURATION'] = metadata_original['tags']['DURATION']
+        signature_verification_result = verify_signature(user_data, metadata, frames, signature, public_key, metadata_original)
+        is_video = True
     os.remove(local_video_path)
-    return signature_verification_result,original_video_url
+    return signature_verification_result, original_video_url, is_video, frames
+def verify_shorts(local_video_path, public_key, signature, user_data, metadata, metadata_original):
+    watermark = extract_watermark(local_video_path)
+    is_signature_valid = verify_watermark_signature(watermark, signature, public_key)
+    is_metadata_consistent = check_metadata_consistency(metadata, metadata_original)
+    verification_result = {
+        "signature_valid": is_signature_valid,
+        "metadata_consistent": is_metadata_consistent,
+        "overall_result": is_signature_valid and is_metadata_consistent
+    }
+    return verification_result
+
 
 def convert_mp4_to_mkv(video_url,input_file, output_file):
     download_video(video_url,input_file)
