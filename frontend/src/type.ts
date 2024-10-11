@@ -2,7 +2,14 @@ export type Report = {
     'Signature verification result': string,
     'Tampering Detection result': VideoTamperingDetectionReport,
     'Audio analysis result':string,
-    'Audio similarity percentage':string
+    'Audio similarity percentage':string,
+    'deepfake chances' : number, 
+}
+
+export type Shorts_Report = {
+  'Signature verification result': string,
+  'Tampering Detection result': VideoTamperingDetectionReport,
+  'deepfake chances' : number, 
 }
 
 export type VideoTamperingDetectionReport={

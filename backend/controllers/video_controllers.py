@@ -170,7 +170,6 @@ def test_video():
             'Audio analysis result':audio_analysis_report,
             'Audio similarity percentage':similarity_percentage,
             '% deepfake chances':deepfake_value
-
         }
         return jsonify({"status": "success", "message": message,"is_video":True}), 200
     elif not is_video:

@@ -16,7 +16,7 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import HomeIcon from '@mui/icons-material/Home';
 // import {Storage} from '@google-cloud/storage'
 import { sign } from "crypto";
-import {Report,VideoTamperingDetectionReport} from "../type.ts"
+import {Report,Shorts_Report,VideoTamperingDetectionReport} from "../type.ts"
 import { json } from "stream/consumers";
 
 const supabase = createClient(import.meta.env.VITE_SUPABASE_URL,import.meta.env.VITE_SUPABASE_ANON_KEY);
@@ -27,6 +27,7 @@ const VideoCheck: React.FC = () => {
   const navigate = useNavigate();
   const [title, setTitle] = useState<string>("");
   const [json_report, setReport] = useState<Report|null>(null);
+  const [json_report_for_shorts,setReport_for_shorts] = useState<Shorts_Report|null>(null);
   const [video_tampering_report,setVideoTamperingReport]=useState<VideoTamperingDetectionReport|null>(null)
   const [progress, setProgress] = useState(0);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -99,19 +100,31 @@ const VideoCheck: React.FC = () => {
     }
     const response = await axios.post(`${serverUrl}/test_video_url`, storeStruct)
     if (response.status === 200) {
+      if (response.data.is_video){
+        console.log("API Response:", response.data);
+        const json_report=response.data.message
+        const video_tampering_report=JSON.parse(json_report['Tampering detection result'].replace(/```json|```/g, '').trim())
+        console.log(json_report,video_tampering_report)
+        setReport(json_report)
+        setVideoTamperingReport(video_tampering_report)
+        console.log(response.data)
+      }
+      else if(!response.data.is_video){
+        console.log("API Response:", response.data);
+        const shorts_report=response.data.message
+        const video_tampering_report=JSON.parse(shorts_report['Tampering detection result'].replace(/```json|```/g, '').trim())
+        console.log(shorts_report,video_tampering_report)
+        setReport_for_shorts(shorts_report)
+        setVideoTamperingReport(video_tampering_report)
+        console.log(response.data)
+      }
       // setProgress(0)
       // setVideoUrl("")
       // // setSignedUrl("")
       // setTitle("")
       // setSelectedFile(null)
       // setIsSubmitValid(false)
-      console.log("API Response:", response.data);
-      const json_report=response.data.message
-      const video_tampering_report=JSON.parse(json_report['Tampering detection result'].replace(/```json|```/g, '').trim())
-      console.log(json_report,video_tampering_report)
-      setReport(json_report)
-      setVideoTamperingReport(video_tampering_report)
-      console.log(response.data)
+      
     }
   }
 
